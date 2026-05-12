@@ -1,0 +1,32 @@
+# Virtual Environment
+.venv/
+
+# Python cache
+__pycache__/
+*.pyc
+
+# Spark / Hadoop output
+output/
+
+# DuckDB
+*.duckdb
+
+# Large datasets
+data/flights.csv
+
+# Parquet files
+*.parquet
+
+# Spark temp files
+*.crc
+_SUCCESS
+
+# VS Code
+.vscode/
+
+# Logs
+logs/
+
+# OS files
+Thumbs.db
+.DS_Store
