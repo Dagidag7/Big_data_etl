@@ -2,6 +2,7 @@ from pyspark.sql import SparkSession
 from pyspark.sql.functions import col, when
 
 # Create Spark Session
+
 spark = SparkSession.builder \
     .master("local[*]") \
     .appName("Transform Data") \
@@ -9,7 +10,6 @@ spark = SparkSession.builder \
     .config("spark.executor.memory", "4g") \
     .config("spark.sql.shuffle.partitions", "4") \
     .getOrCreate()
-
 # =========================
 # READ DATASETS
 # =========================
