@@ -1,9 +1,10 @@
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import col
 
-# ==========================================
-# CREATE SPARK SESSION
-# ==========================================
+# =========================================================
+# INITIALIZE SPARK SESSION
+# Configure Spark application settings and memory allocation
+# =========================================================
 
 spark = SparkSession.builder \
     .master("local[*]") \
@@ -13,11 +14,13 @@ spark = SparkSession.builder \
     .config("spark.sql.shuffle.partitions", "4") \
     .getOrCreate()
 
+# Reduce unnecessary Spark log messages
 spark.sparkContext.setLogLevel("WARN")
 
-# ==========================================
-# READ CSV FILE
-# ==========================================
+# =========================================================
+# LOAD FLIGHT DATA FROM CSV FILE
+# Read airline flight records with automatic schema detection
+# =========================================================
 
 print("\n=== READING CSV FILE ===")
 
@@ -26,12 +29,14 @@ flights_df = spark.read \
     .option("inferSchema", "true") \
     .csv("data/flights.csv")
 
+# Display sample records and dataset structure
 flights_df.show(5)
 flights_df.printSchema()
 
-# ==========================================
-# READ JSON FILE
-# ==========================================
+# =========================================================
+# LOAD AIRPORT DATA FROM JSON FILE
+# Read airport reference dataset from JSON format
+# =========================================================
 
 print("\n=== READING JSON FILE ===")
 
@@ -39,35 +44,40 @@ airports_df = spark.read \
     .option("inferSchema", "true") \
     .json("data/airports_clean.json")
 
+# Display sample records and dataset structure
 airports_df.show(5)
 airports_df.printSchema()
 
-# ==========================================
-# BASIC CLEANING
-# ==========================================
+# =========================================================
+# CLEAN AND TRANSFORM FLIGHT DATA
+# Handle missing values and create derived columns
+# =========================================================
 
 print("\n=== CLEANING DATA ===")
 
-# Remove rows with missing important values
+# Remove rows missing critical flight information
 clean_flights_df = flights_df.dropna(
     subset=["FL_DATE", "AIRLINE", "ORIGIN", "DEST"]
 )
 
-# Fill delay nulls with 0
+# Replace missing delay values with 0
 clean_flights_df = clean_flights_df.fillna({
     "DEP_DELAY": 0,
     "ARR_DELAY": 0
 })
 
-# Create delay status column
+# Create delay indicator column:
+# 1 = delayed more than 15 minutes
+# 0 = on-time or minor delay
 clean_flights_df = clean_flights_df.withColumn(
     "DELAY_STATUS",
     (col("ARR_DELAY") > 15).cast("integer")
 )
 
-# ==========================================
-# SAVE CLEANED DATA
-# ==========================================
+# =========================================================
+# SAVE TRANSFORMED DATASETS
+# Store cleaned datasets in Parquet format for analytics
+# =========================================================
 
 print("\n=== SAVING CLEANED DATA ===")
 
@@ -81,8 +91,9 @@ airports_df.write \
 
 print("\n=== ETL EXTRACTION COMPLETED SUCCESSFULLY ===")
 
-# ==========================================
-# STOP SPARK
-# ==========================================
+# =========================================================
+# TERMINATE SPARK SESSION
+# Release Spark resources after pipeline execution
+# =========================================================
 
 spark.stop()
