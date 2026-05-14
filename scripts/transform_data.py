@@ -1,7 +1,7 @@
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import col, when
 
-# Create Spark Session
+# Initialize Spark environment
 
 spark = SparkSession.builder \
     .master("local[*]") \
@@ -10,8 +10,9 @@ spark = SparkSession.builder \
     .config("spark.executor.memory", "4g") \
     .config("spark.sql.shuffle.partitions", "4") \
     .getOrCreate()
+
 # =========================
-# READ DATASETS
+# IMPORT SOURCE FILES
 # =========================
 
 flights_df = spark.read.option("header", "true") \
@@ -23,17 +24,17 @@ airports_df = spark.read \
     .json("data/airports_clean.json")
 
 # =========================
-# DATA CLEANING
+# FILTER INVALID RECORDS
 # =========================
 
-# Remove null values from ARR_DELAY
+# Exclude rows with missing arrival delay data
 flights_cleaned = flights_df.dropna(subset=["ARR_DELAY"])
 
-# Remove cancelled flights
+# Keep flights that completed successfully
 flights_cleaned = flights_cleaned.filter(col("CANCELLED") == 0)
 
 # =========================
-# CREATE NEW COLUMN
+# ADD STATUS LABEL
 # =========================
 
 flights_cleaned = flights_cleaned.withColumn(
@@ -43,7 +44,7 @@ flights_cleaned = flights_cleaned.withColumn(
 )
 
 # =========================
-# SELECT IMPORTANT COLUMNS
+# RETRIEVE REQUIRED FIELDS
 # =========================
 
 final_df = flights_cleaned.select(
@@ -56,7 +57,7 @@ final_df = flights_cleaned.select(
 )
 
 # =========================
-# SHOW RESULT
+# OUTPUT TRANSFORMED DATA
 # =========================
 
 print("\n=== TRANSFORMED DATA ===")
