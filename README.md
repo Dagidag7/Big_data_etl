@@ -1,9 +1,9 @@
-# Big Data ETL Pipeline Project
+# Big Data ETL Pipeline and Flight Delay Analytics
 
-## Team Members
+## Contributors
 
 | No. | Name | Student ID |
-|-----|------|------------|
+|----|----------------------|-------------|
 | 1 | BISRAT ENDALE | DBU1401063 |
 | 2 | DAGIMAWIT KELEM | DBU1501101 |
 | 3 | ZELEKE MEKONNEN | DBU1501598 |
@@ -14,190 +14,223 @@
 | 8 | RAHEL MEKONEN | DBU1501427 |
 | 9 | FIREHIWOT TESFAYE | DBU1501207 |
 
+---
 ## Project Overview
 
-This project implements an ETL pipeline using PySpark, DuckDB, and Prefect for airline data analytics. The pipeline extracts flight and airport data, transforms it to derive delay status information, and loads it into efficient storage formats for analysis.
+This project implements a complete ETL (Extract, Transform, Load) pipeline for airline flight data analysis using PySpark, DuckDB, and Power BI.
 
-## Objectives
+The pipeline extracts raw flight datasets, performs cleaning and transformation using PySpark, stores analytical data in DuckDB, and visualizes insights through an interactive Power BI dashboard.
 
-- **Data Extraction**: Read flight data from CSV and airport data from JSON
-- **Data Transformation**: Clean and process data to identify delayed flights
-- **Data Loading**: Store processed data in Parquet format and DuckDB
-- **Workflow Orchestration**: Automate the entire pipeline with Prefect
-- **Performance**: Utilize PySpark for distributed data processing
+The goal of the project is to analyze airline delays, flight trends, and airline performance using big data technologies and business intelligence tools.
+
+---
+
+## Project Objectives
+
+- Extract and integrate flight datasets from multiple sources
+- Clean and transform large-scale flight data using PySpark
+- Store processed analytical data in DuckDB
+- Generate optimized Parquet files
+- Build an interactive Power BI dashboard
+- Analyze airline delay trends and flight performance
+
+---
 
 ## Technologies Used
 
 - Python
 - PySpark
 - DuckDB
-- Prefect
+- Power BI
+- Pandas
 - Parquet
+- Git & GitHub
 
-## Architecture Diagram
+---
 
-[ETL Pipeline Architecture](Architecture_diagram.png)
+## Project Structure
 
-## ETL Workflow
+BIG_DATA_ETL/
+│
+├── dashboard/
+│   ├── Architecture_diagram.png
+│   ├── BigData_ETL_PowerBI.pbix
+│   └── dashboard_screenshot.jpg
+│
+├── data/
+│   ├── airports.json
+│   └── airports_clean.json
+│
+├── orchestration/
+│   └── pipeline_flow.py
+│
+├── scripts/
+│   ├── convert_airports.py
+│   ├── extract_data.py
+│   ├── load_data.py
+│   ├── test_json.py
+│   └── transform_data.py
+│
+├── .gitignore
+├── README.md
+└── requirements.txt
 
-### 1. Data Preparation (`scripts/convert_airports.py`)
+---
 
-Converts the original nested `airports.json` into JSON Lines format (`airports_clean.json`) for easier processing with PySpark. It adds an `airport_code` field to each airport entry.
+## Pipeline Architecture
 
-### 2. Extract Phase (`scripts/extract_data.py`)
+The project follows a modern ETL architecture:
 
-**Spark Configuration**:
-- Master: local[*]
-- Driver memory: 4g
-- Executor memory: 4g
-- Shuffle partitions: 4
+Source Data → PySpark → DuckDB → Power BI
 
-**Steps**:
-1. Reads `data/flights.csv` with header and inferred schema
-2. Reads `data/airports_clean.json`
-3. Cleans flight data:
-   - Drops rows with missing values in `FL_DATE`, `AIRLINE`, `ORIGIN`, `DEST`
-   - Fills null `DEP_DELAY` and `ARR_DELAY` values with 0
-   - Creates `DELAY_STATUS` column (1 if arrival delay > 15 minutes, else 0)
-4. Saves cleaned data to:
-   - `output/flights_cleaned` (Parquet)
-   - `output/airports_cleaned` (Parquet)
+Steps:
+1. Extract raw data from CSV, JSON, and Parquet files
+2. Transform and clean data using PySpark
+3. Load transformed data into DuckDB
+4. Orchestrate workflow using Prefect
+5. Visualize insights using Power BI
 
-### 3. Transform Phase (`scripts/transform_data.py`)
+### Architecture Diagram
 
-**Steps**:
-1. Reads flights data from `data/flights.csv` and airports from `data/airports_clean.json`
-2. Cleans data:
-   - Drops rows with null `ARR_DELAY`
-   - Filters out cancelled flights (`CANCELLED == 0`)
-3. Creates `delay_status` column with string values:
-   - "Delayed" if `ARR_DELAY > 15`
-   - "On Time" otherwise
-4. Selects final columns: `FL_DATE`, `AIRLINE`, `ORIGIN`, `DEST`, `ARR_DELAY`, `delay_status`
+![Architecture Diagram](dashboard/Architecture_diagram.png)
 
-### 4. Load Phase (`scripts/load_data.py`)
+---
 
-**Steps**:
-1. Reads flights data from `data/flights.csv`
-2. Performs inline transformation:
-   - Selects `FL_DATE`, `AIRLINE`, `ORIGIN`, `DEST`, `ARR_DELAY`
-   - Creates `delay_status` column
-3. Saves transformed data as Parquet to `output/flights_parquet`
-4. Loads Parquet data into DuckDB database at `output/flights.duckdb`
-5. Verifies data by querying DuckDB and displaying sample records
+## Dataset Description
 
-### 5. Orchestration (`orchestration/pipeline_flow.py`)
+The final flights table in DuckDB contains:
 
-Uses Prefect to define and run the complete ETL pipeline:
-- **Tasks**:
-  - `extract()`: Executes `scripts/extract_data.py`
-  - `transform()`: Executes `scripts/transform_data.py`
-  - `load()`: Executes `scripts/load_data.py`
-- **Flow**: `etl_pipeline()` runs tasks sequentially
+| Column Name   | Description |
+|---------------|-------------|
+| FL_DATE       | Flight date |
+| AIRLINE       | Airline name/code |
+| ORIGIN        | Origin airport |
+| DEST          | Destination airport |
+| ARR_DELAY     | Arrival delay in minutes |
+| DEP_DELAY     | Departure delay in minutes |
+| AIR_TIME      | Flight air time |
+| DISTANCE      | Flight distance |
+| delay_status  | Delayed or On Time |
 
-## Installation Guide
+---
 
-### Prerequisites
+## Setup Instructions
 
-- Python 3.8 or higher
-- Java 8 or higher (required for Spark)
-- 4GB+ RAM recommended
+### 1. Clone the Repository
 
-### Setup Steps
+git clone https://github.com/Dagidag7/Big_data_etl.git
+cd Big_data_etl
 
-1. **Clone or Download the Project**
-```bash
-cd Big_data_etl-main
-```
+### 2. Create Virtual Environment
 
-2. **Create Virtual Environment**
-```bash
 python -m venv venv
-venv\Scripts\activate  # Windows
-# Or on Linux/Mac: source venv/bin/activate
-```
 
-3. **Install Dependencies**
-```bash
+### 3. Activate Virtual Environment
+
+#### Windows
+
+venv\Scripts\activate
+
+#### Linux / Mac
+
+source venv/bin/activate
+
+### 4. Install Dependencies
+
 pip install -r requirements.txt
-```
 
-4. **Prepare Data**
-- Place `flights.csv` in the `data/` directory
-- Ensure `airports.json` is present (already included)
-- Convert airports JSON (optional but recommended):
-```bash
-python scripts/convert_airports.py
-```
+---
 
-## How to Run the Pipeline
+## Running the ETL Pipeline
 
-### Full Pipeline (Recommended)
-```bash
-python orchestration/pipeline_flow.py
-```
+### Run Extraction
 
-### Individual Scripts
-```bash
-# Extract Phase
-python scripts/extract_data.py
+python scripts/extract.py
 
-# Transform Phase
-python scripts/transform_data.py
+### Run Transformation
 
-# Load Phase
-python scripts/load_data.py
-```
+python scripts/transform.py
 
-## Dashboard / BI Report
+### Run Loading Process
 
-### Data Available in DuckDB
+python scripts/load.py
 
-The final table `flights` in DuckDB contains:
-- `FL_DATE`: Flight date
-- `AIRLINE`: Airline code
-- `ORIGIN`: Origin airport code
-- `DEST`: Destination airport code
-- `ARR_DELAY`: Arrival delay in minutes
-- `delay_status`: "Delayed" or "On Time"
+---
 
-### Sample Queries
+## Power BI Dashboard
 
-```sql
--- Count delayed vs on-time flights
-SELECT delay_status, COUNT(*) as count
+The Power BI dashboard provides:
+
+- Total flights KPI
+- Flight trends by year
+- Delay status distribution
+- Top airlines by flights
+- Average arrival delay by airline
+
+---
+
+## Dashboard Preview
+
+![Dashboard Screenshot](dashboard/dashboard_screenshot.jpg)
+
+---
+
+## Sample SQL Queries
+
+### Count Delayed vs On-Time Flights
+
+SELECT delay_status, COUNT(*) AS count
 FROM flights
 GROUP BY delay_status;
 
--- Average delay by airline
-SELECT AIRLINE, AVG(ARR_DELAY) as avg_delay
+### Average Arrival Delay by Airline
+
+SELECT AIRLINE, AVG(ARR_DELAY) AS avg_delay
 FROM flights
 GROUP BY AIRLINE
 ORDER BY avg_delay DESC;
 
--- Top 10 routes with most delays
-SELECT ORIGIN, DEST, COUNT(*) as delayed_count
+### Top 10 Routes with Most Delays
+
+SELECT ORIGIN, DEST, COUNT(*) AS delayed_count
 FROM flights
 WHERE delay_status = 'Delayed'
 GROUP BY ORIGIN, DEST
 ORDER BY delayed_count DESC
 LIMIT 10;
-```
 
-### Output Locations
+---
 
-- Parquet files: `output/flights_parquet/`
-- DuckDB database: `output/flights.duckdb`
-- Cleaned data: `output/flights_cleaned/`
+## Output Locations
+
+- Parquet files: output/flights_parquet/
+- DuckDB database: output/flights.duckdb
+- Cleaned data: output/flights_cleaned/
+
+---
+
+## Key Insights
+
+- Most flights were completed on time
+- Some airlines experienced significantly higher arrival delays
+- Flight activity changed across different years
+- Delay patterns varied between airlines and routes
+
+---
 
 ## Future Improvements
 
-- **Unified Pipeline**: Modify scripts to pass data between phases instead of reading from raw files each time
-- **Error Handling**: Add try-except blocks and logging
-- **Configuration File**: Externalize paths and Spark settings
-- **Unit Tests**: Add tests for each component
-- **Data Validation**: Add schema validation and quality checks
-- **Join Airports Data**: Enrich flight data with airport information
-- **Incremental Processing**: Support processing only new data
-- **Monitoring Dashboard**: Add Prefect UI integration
+- Unified ETL pipeline workflow
+- Better error handling and logging
+- Add configuration files
+- Add automated testing
+- Data validation and schema checks
+- Airport metadata enrichment
+- Incremental data processing
+- Workflow orchestration using Prefect or Airflow
+- Real-time dashboard updates
 
+---
+## Conclusion
+
+This project demonstrates the implementation of a scalable ETL pipeline using modern big data tools and business intelligence technologies. The system successfully processes flight datasets, stores analytical outputs efficiently, and visualizes meaningful insights through Power BI dashboards.
